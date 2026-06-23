@@ -27,11 +27,7 @@ public class GamePlayManager : MonoBehaviour
             _tittleText.gameObject.SetActive(true);
             _tittleText.text = GameManager.Instance.StageName + "-" + GameManager.Instance.CurrentLevel.ToString();
 
-
             SpawnBoard();
-
-            SpawnNodes();
-
         }
     #endregion
 
