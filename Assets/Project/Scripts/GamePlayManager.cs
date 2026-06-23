@@ -30,6 +30,8 @@ public class GamePlayManager : MonoBehaviour
 
             SpawnBoard();
 
+            SpawnNodes();
+
         }
     #endregion
 
@@ -67,13 +69,29 @@ public class GamePlayManager : MonoBehaviour
 
     private LevelData CurrentLevelData;
     [SerializeField] private Node _nodePrefab;
-    private List<Node> nodes;
+    private List<Node> _nodes;
 
-    //
     public Dictionary<Vector2Int, Node> _nodeGrid;
 
     private void SpawnNodes()
     {
+        _nodes = new List<Node>();
+        _nodeGrid = new Dictionary<Vector2Int, Node>();
+
+        int currentLevelSize = GameManager.Instance.CurrentLevel + 4;
+
+        Node spawnedNode;
+        Vector3 spawnPos;
+
+        for (int i = 0; i < currentLevelSize; i++)
+        {
+            for (int j = 0; j < currentLevelSize; j++)
+            {
+                spawnPos = new Vector3(i + 0.5f, j + 0.5f, 0f);
+
+                spawnedNode = Instantiate(_nodePrefab,spawnPos, Quaternion.identity);
+            }
+        }
 
     }
 
