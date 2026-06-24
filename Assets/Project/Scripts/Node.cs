@@ -20,7 +20,7 @@ public class Node : MonoBehaviour
     {
         get
         {
-            if(_point.activeSelf)
+            if (_point.activeSelf)
             {
                 return ConnectedNodes.Count == 1;
             }
@@ -32,7 +32,7 @@ public class Node : MonoBehaviour
     {
         get
         {
-            if(_point.activeSelf)
+            if (_point.activeSelf)
             {
                 return true;
             }
@@ -64,7 +64,7 @@ public class Node : MonoBehaviour
 
     public void SetEdge(Vector2Int offset, Node node)
     {
-        if(offset == Vector2Int.up)
+        if (offset == Vector2Int.up)
         {
             ConnectedEdges[node] = _topEdge;
             return;
@@ -91,12 +91,13 @@ public class Node : MonoBehaviour
 
     public void SolveHighLight()
     {
-       
+
     }
 
     public void UpdateInput(Node connectedNode)
     {
-       if(!ConnectedEdges.ContainsKey(connectedNode))
+        // Invalid Input 
+        if (!ConnectedEdges.ContainsKey(connectedNode))
         {
             return;
         }
