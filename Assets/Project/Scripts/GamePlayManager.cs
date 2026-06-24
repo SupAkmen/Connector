@@ -110,7 +110,6 @@ public class GamePlayManager : MonoBehaviour
         List<Vector2Int> offsetPos = new List<Vector2Int>()
         {Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right};
 
-
         foreach(var item in _nodeGrid)
         {
             foreach(var offset in offsetPos)
