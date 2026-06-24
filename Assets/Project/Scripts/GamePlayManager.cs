@@ -107,7 +107,6 @@ public class GamePlayManager : MonoBehaviour
             }
         }
 
-
         List<Vector2Int> offsetPos = new List<Vector2Int>()
         {Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right};
 
@@ -125,8 +124,6 @@ public class GamePlayManager : MonoBehaviour
             }
         }
     }
-
-    
 
     public List<Color> NodeColors;
     public int GetColorID(int i,int j)
@@ -159,6 +156,16 @@ public class GamePlayManager : MonoBehaviour
     #endregion
 
     #region WIN_CODITIONS
+    private void CheckWin()
+    {
+        bool IsWinning = true;
+
+        foreach(var item in  _nodes)
+        {
+            item.SolveHighLight();
+        }
+    }
+
     #endregion
 
     #region BUTTON_FUNCTIONS

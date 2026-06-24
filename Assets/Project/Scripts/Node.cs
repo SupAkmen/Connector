@@ -12,6 +12,7 @@ public class Node : MonoBehaviour
     [SerializeField] private GameObject _highLight;
 
     private Dictionary<Node, GameObject> ConnectedEdges;
+    public List<Node> ConnectedNodes = new List<Node>();
 
     [HideInInspector] public int colorId;
     public Vector2Int Pos2D { get; set; }
@@ -62,5 +63,10 @@ public class Node : MonoBehaviour
         }
     }
 
-    public List<Node> ConnectedNodes = new List<Node>();
+    internal void SolveHighLight()
+    {
+       
+    }
+
+   
 }
