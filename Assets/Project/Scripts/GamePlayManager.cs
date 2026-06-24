@@ -9,35 +9,35 @@ using UnityEngine;
 public class GamePlayManager : MonoBehaviour
 {
     #region START_METHODS
-        #region START_VARIABLES
-        public static GamePlayManager Instance;
+    #region START_VARIABLES
+    public static GamePlayManager Instance;
 
-        [HideInInspector] public bool hasGameFinished;
+    [HideInInspector] public bool hasGameFinished;
 
-        [SerializeField] TextMeshProUGUI _tittleText;
-        [SerializeField] GameObject _winText;
-        [SerializeField] SpriteRenderer _clickHighlight;
+    [SerializeField] TextMeshProUGUI _tittleText;
+    [SerializeField] GameObject _winText;
+    [SerializeField] SpriteRenderer _clickHighlight;
 
-        private void Awake()
-        {
-            Instance = this;
+    private void Awake()
+    {
+        Instance = this;
+        hasGameFinished = false;
+        _winText.SetActive(false);
+        _tittleText.gameObject.SetActive(true);
+        _tittleText.text = GameManager.Instance.StageName + "-" + GameManager.Instance.CurrentLevel.ToString();
 
-            hasGameFinished = false;
-            _winText.SetActive(false);
-            _tittleText.gameObject.SetActive(true);
-            _tittleText.text = GameManager.Instance.StageName + "-" + GameManager.Instance.CurrentLevel.ToString();
+        CurrentLevelData = GameManager.Instance.GetLevel();
 
+        SpawnBoard();
+        SpawnNodes();
 
-            SpawnBoard();
-
-            SpawnNodes();
-
-        }
+    }
     #endregion
 
     #region BOARD_SPAWN
     [SerializeField] private SpriteRenderer _boardPrefab, _bgCellPrefab;
 
+    // tao bang dua vao currentLevelSize sau do them cac o xep vao trong board, thay doi vi tri cam ra xa cho phu hop voi board
     private void SpawnBoard()
     {
         int currentLevelSize = GameManager.Instance.CurrentStage + 4;
@@ -63,14 +63,13 @@ public class GamePlayManager : MonoBehaviour
         _clickHighlight.transform.position = Vector3.zero;
         _clickHighlight.gameObject.SetActive(false);
     }
-    #endregion
+        #endregion
 
     #region NODE_SPAWN
 
-    private LevelData CurrentLevelData;
     [SerializeField] private Node _nodePrefab;
+    private LevelData CurrentLevelData;
     private List<Node> _nodes;
-
     public Dictionary<Vector2Int, Node> _nodeGrid;
 
     private void SpawnNodes()
@@ -78,7 +77,7 @@ public class GamePlayManager : MonoBehaviour
         _nodes = new List<Node>();
         _nodeGrid = new Dictionary<Vector2Int, Node>();
 
-        int currentLevelSize = GameManager.Instance.CurrentLevel + 4;
+        int currentLevelSize = GameManager.Instance.CurrentStage + 4;
 
         Node spawnedNode;
         Vector3 spawnPos;
@@ -90,13 +89,68 @@ public class GamePlayManager : MonoBehaviour
                 spawnPos = new Vector3(i + 0.5f, j + 0.5f, 0f);
 
                 spawnedNode = Instantiate(_nodePrefab,spawnPos, Quaternion.identity);
+
+                spawnedNode.Init();
+
+                int colorIdForSpawnNode = GetColorID(i, j);
+
+                if(colorIdForSpawnNode != -1)
+                {
+                    spawnedNode.SetColorForPoint(colorIdForSpawnNode);
+                }
+
+                _nodes.Add(spawnedNode);
+
+                _nodeGrid.Add(new Vector2Int(i, j), spawnedNode);
+
+                spawnedNode.Pos2D = new Vector2Int(i, j);
             }
         }
 
+
+        List<Vector2Int> offsetPos = new List<Vector2Int>()
+        {Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right};
+
+
+        foreach(var item in _nodeGrid)
+        {
+            foreach(var offset in offsetPos)
+            {
+                var checkPos = item.Key + offset;
+
+                if(_nodeGrid.ContainsKey(checkPos))
+                {
+                    item.Value.SetEdge(offset,_nodeGrid[checkPos]);
+                }
+            }
+        }
     }
 
-    public List<Color> NodeColors;
+    
 
+    public List<Color> NodeColors;
+    public int GetColorID(int i,int j)
+    {
+        List<Edge> edges  = CurrentLevelData.Edges;
+
+        Vector2Int point = new Vector2Int(i, j);
+
+        for(int colorId = 0; colorId < edges.Count; colorId++)
+        {
+            if (edges[colorId].StartPoint == point || edges[colorId].EndPoint == point)
+            {
+                return colorId;
+            }
+        }
+        return -1;
+    }
+
+    public Color GetHighLightColor(int colorId)
+    {
+        Color result = NodeColors[colorId];
+        result.a = 1;
+        return result;
+    }
     #endregion
 
     #endregion
