@@ -273,12 +273,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _point: {fileID: 6241769323556770950}
   _topEdge: {fileID: 5174479541958448656}
-  _botEdge: {fileID: 3993376936293925740}
-  _leftEdge: {fileID: 8774801794832376821}
-  _rightEdge: {fileID: 528406786764815566}
+  _botEdge: {fileID: 528406786764815566}
+  _leftEdge: {fileID: 3993376936293925740}
+  _rightEdge: {fileID: 8774801794832376821}
   _highLight: {fileID: 8760763109629363225}
-  colorId: 0
   ConnectedNodes: []
+  colorId: 0
 --- !u!1 &5174479541958448656
 GameObject:
   m_ObjectHideFlags: 0

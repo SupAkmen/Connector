@@ -43,7 +43,6 @@ public class LevelButtonManager : MonoBehaviour
         _levelText.text = parts[parts.Length - 1];
         currentLevel  = int.Parse(_levelText.text);
         IsLevelUnlocked = GameManager.Instance.IsLevelUnlock(currentLevel);
-        Debug.Log(IsLevelUnlocked);
 
         _image.color = IsLevelUnlocked ? MainMenuManager.instance.CurrentColor : _inactiveColor ;
 

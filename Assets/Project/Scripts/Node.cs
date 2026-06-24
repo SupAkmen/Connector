@@ -16,6 +16,32 @@ public class Node : MonoBehaviour
 
     [HideInInspector] public int colorId;
     public Vector2Int Pos2D { get; set; }
+    public bool IsWin
+    {
+        get
+        {
+            if(_point.activeSelf)
+            {
+                return ConnectedNodes.Count == 1;
+            }
+            return ConnectedNodes.Count == 2;
+        }
+    }
+
+    public bool IsClickable
+    {
+        get
+        {
+            if(_point.activeSelf)
+            {
+                return true;
+            }
+
+            return ConnectedNodes.Count > 0;
+        }
+    }
+
+    public bool IsEndNode => _point.activeSelf;
 
     public void Init()
     {
@@ -63,10 +89,28 @@ public class Node : MonoBehaviour
         }
     }
 
-    internal void SolveHighLight()
+    public void SolveHighLight()
     {
        
     }
 
-   
+    public void UpdateInput(Node connectedNode)
+    {
+       if(!ConnectedEdges.ContainsKey(connectedNode))
+        {
+            return;
+        }
+
+        AddEdge(connectedNode);
+    }
+
+    private void AddEdge(Node connectedNode)
+    {
+        connectedNode.colorId = colorId;
+        connectedNode.ConnectedNodes.Add(this);
+        ConnectedNodes.Add(connectedNode);
+        GameObject connectedEdge = ConnectedEdges[connectedNode];
+        connectedEdge.SetActive(true);
+        connectedEdge.GetComponent<SpriteRenderer>().color = GamePlayManager.Instance.NodeColors[colorId];
+    }
 }

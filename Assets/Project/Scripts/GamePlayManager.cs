@@ -153,6 +153,66 @@ public class GamePlayManager : MonoBehaviour
     #endregion
 
     #region UPDATES_METHODS
+
+    private Node startNode;
+
+    private void Update()
+    {
+        if (hasGameFinished) return;
+
+        if(Input.GetMouseButtonDown(0))
+        {
+           
+            startNode = null;
+            return;
+        }
+
+        if(Input.GetMouseButton(0))
+        {
+
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 mousePos2D = new Vector2(mousePos.x,mousePos.y);
+            RaycastHit2D hit = Physics2D.Raycast(mousePos,Vector2.zero);
+
+            if(startNode == null)
+            {
+                if(hit && hit.collider.gameObject.TryGetComponent(out Node tNode) && tNode.IsClickable)
+                {
+                    startNode = tNode;
+                    _clickHighlight.gameObject.SetActive(true);
+                    _clickHighlight.gameObject.transform.position = (Vector3)mousePos2D;
+                    _clickHighlight.color = GetHighLightColor(tNode.colorId);
+                }
+                return;
+            }
+
+            _clickHighlight.gameObject.transform.position = (Vector3)mousePos2D;
+
+            if(hit && hit.collider.gameObject.TryGetComponent(out Node tempNode) && startNode != tempNode )
+            {
+                if(startNode.colorId != tempNode.colorId && tempNode.IsEndNode)
+                {
+                    return;
+                }
+
+                startNode.UpdateInput(tempNode);
+
+                CheckWin();
+                startNode = null;
+            }
+
+            return;
+        }
+
+        if(Input.GetMouseButtonUp(0))
+        {
+            startNode = null;
+            _clickHighlight.gameObject.SetActive(false);
+        }
+    }
+
+
+
     #endregion
 
     #region WIN_CODITIONS
@@ -164,6 +224,23 @@ public class GamePlayManager : MonoBehaviour
         {
             item.SolveHighLight();
         }
+
+        foreach(var item in _nodes)
+        {
+            IsWinning &= item.IsWin;
+
+            if(!IsWinning)
+            {
+                return;
+            }
+        }
+
+        GameManager.Instance.UnlockLevel();
+
+        _winText.gameObject.SetActive(true);
+        _clickHighlight.gameObject.SetActive(false);
+
+        hasGameFinished = true;
     }
 
     #endregion
