@@ -1,3 +1,5 @@
+using Connect.Core;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,7 +17,7 @@ public class Node : MonoBehaviour
     private Dictionary<Node, GameObject> ConnectedEdges;
 
     // Dung de luu cac node duoc noi that su 
-    public List<Node> ConnectedNodes = new List<Node>();  
+    public List<Node> ConnectedNodes = new List<Node>();
 
     [HideInInspector] public int colorId;
     public Vector2Int Pos2D { get; set; }
@@ -92,11 +94,6 @@ public class Node : MonoBehaviour
         }
     }
 
-    public void SolveHighLight()
-    {
-
-    }
-
     public void UpdateInput(Node connectedNode)
     {
         // Invalid Input 
@@ -106,7 +103,7 @@ public class Node : MonoBehaviour
         }
         // Connected node already exist 
         // Delete the edges and the parts
-        if(ConnectedNodes.Contains(connectedNode))
+        if (ConnectedNodes.Contains(connectedNode))
         {
             ConnectedNodes.Remove(connectedNode);
             connectedNode.ConnectedNodes.Remove(this);
@@ -115,10 +112,7 @@ public class Node : MonoBehaviour
             connectedNode.DeleteNode();
             return;
         }
-      
-
         //Start Node has 2 edges
-
         if (ConnectedNodes.Count == 2)
         {
             Node tempNode = ConnectedNodes[0];
@@ -139,9 +133,8 @@ public class Node : MonoBehaviour
                 tempNode.DeleteNode();
             }
         }
-
         //EndNode has 2 edges
-        if(connectedNode.ConnectedNodes.Count == 2)
+        if (connectedNode.ConnectedNodes.Count == 2)
         {
             Node tempNode = connectedNode.ConnectedNodes[0];
 
@@ -155,10 +148,82 @@ public class Node : MonoBehaviour
             tempNode.ConnectedNodes.Remove(connectedNode);
             connectedNode.RemoveEdge(tempNode);
             tempNode.DeleteNode();
-
+        }
+        // Starting Node is different color and connected node has 1 edge
+        if (connectedNode.ConnectedNodes.Count == 1 && connectedNode.colorId != colorId)
+        {
+            Node tempNode = connectedNode.ConnectedNodes[0];
+            connectedNode.ConnectedNodes.Remove(tempNode);
+            tempNode.ConnectedNodes.Remove(connectedNode);
+            connectedNode.RemoveEdge(tempNode);
+            tempNode.DeleteNode();
+        }
+        // Starting is Edge Node and has 1 edge already 
+        if (ConnectedNodes.Count == 1 && IsEndNode)
+        {
+            Node tempNode = ConnectedNodes[0];
+            ConnectedNodes.Remove(tempNode);
+            tempNode.ConnectedNodes.Remove(this);
+            RemoveEdge(tempNode);
+            tempNode.DeleteNode();
+        }
+        // ConnectedNode is EdgeNode and ha 1 edge already
+        if (connectedNode.ConnectedNodes.Count == 1 && connectedNode.IsEndNode)
+        {
+            Node tempNode = connectedNode.ConnectedNodes[0];
+            connectedNode.ConnectedNodes.Remove(tempNode);
+            tempNode.ConnectedNodes.Remove(connectedNode);
+            connectedNode.RemoveEdge(tempNode);
+            tempNode.DeleteNode();
         }
 
         AddEdge(connectedNode);
+
+        // Dont allow box 
+        if (colorId != connectedNode.colorId)
+        {
+            return;
+        }
+
+        List<Node> checkingNodes = new List<Node>() { this };
+        List<Node> resultsNodes = new List<Node>();
+
+        while (checkingNodes.Count > 0)
+        {
+            foreach (var item in checkingNodes[0].ConnectedNodes)
+            {
+                if (!resultsNodes.Contains(item))
+                {
+                    resultsNodes.Add(item);
+                    checkingNodes.Add(item);
+                }
+            }
+
+            checkingNodes.Remove(checkingNodes[0]);
+        }
+
+        foreach (var item in resultsNodes)
+        {
+            if (!item.IsEndNode && item.IsDegreeThree(resultsNodes))
+            {
+                Node tempNode = item.ConnectedNodes[0];
+                item.ConnectedNodes.Remove(tempNode);
+                tempNode.ConnectedNodes.Remove(item);
+                item.RemoveEdge(tempNode);
+                tempNode.DeleteNode();
+
+                if (item.ConnectedNodes.Count == 0) return;
+
+                tempNode = item.ConnectedNodes[0];
+                item.ConnectedNodes.Remove(tempNode);
+                tempNode.ConnectedNodes.Remove(item);
+                item.RemoveEdge(tempNode);
+                tempNode.DeleteNode();
+
+                return;
+            }
+        }
+
     }
 
     private void AddEdge(Node connectedNode)
@@ -183,15 +248,15 @@ public class Node : MonoBehaviour
     {
         Node startNode = this;
 
-        if(startNode .IsConnectedToEndNode())
+        if (startNode.IsConnectedToEndNode())
         {
             return;
         }
 
-        while(startNode != null)
+        while (startNode != null)
         {
             Node tempNode = null;
-            if(startNode.ConnectedNodes.Count != 0)
+            if (startNode.ConnectedNodes.Count != 0)
             {
                 tempNode = startNode.ConnectedNodes[0];
                 startNode.ConnectedNodes.Clear();
@@ -210,14 +275,14 @@ public class Node : MonoBehaviour
             checkNode = new List<Node>();
         }
 
-        if(IsEndNode)
+        if (IsEndNode)
         {
             return true;
         }
 
-        foreach(var item in ConnectedNodes)
+        foreach (var item in ConnectedNodes)
         {
-            if(!checkNode.Contains(item))
+            if (!checkNode.Contains(item))
             {
                 checkNode.Add(item);
                 return item.IsConnectedToEndNode(checkNode);
@@ -225,5 +290,99 @@ public class Node : MonoBehaviour
         }
 
         return false;
+    }
+
+    private List<Vector2Int> directionCheck = new List<Vector2Int>()
+    {
+        Vector2Int.up, Vector2Int.left, Vector2Int.down, Vector2Int.right
+    };
+
+    public bool IsDegreeThree(List<Node> resultNodes)
+    {
+        bool isDegreeThree = false;
+
+        int numOfNeighbours = 0;
+
+        for (int i = 0; i < directionCheck.Count; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                Vector2Int checkingPos = Pos2D + directionCheck[(i + j) % directionCheck.Count];
+
+                if (GamePlayManager.Instance._nodeGrid.TryGetValue(checkingPos, out Node result))
+                {
+                    if (resultNodes.Contains(result))
+                    {
+                        numOfNeighbours++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (numOfNeighbours == 3)
+            {
+                break;
+            }
+
+            numOfNeighbours = 0;
+        }
+
+        if (numOfNeighbours >= 3)
+        {
+            isDegreeThree = true;
+        }
+
+        return isDegreeThree;
+    }
+
+    public void SolveHighLight()
+    {
+        if(ConnectedNodes.Count == 0)
+        {
+            _highLight.SetActive(false);
+            return;
+        }
+
+
+        List<Node> checkingNodes = new List<Node>() { this };
+        List<Node> resultNodes = new List<Node>() { this };
+
+        while(checkingNodes.Count > 0)
+        {
+            foreach(var item in checkingNodes[0].ConnectedNodes)
+            {
+                if(!resultNodes.Contains(item))
+                {
+                    resultNodes.Add(item);
+                    checkingNodes.Add(item);
+                }
+            }
+
+            checkingNodes.Remove(checkingNodes[0]);
+        }
+
+        checkingNodes.Clear();
+
+        foreach(var item in resultNodes)
+        {
+            if(item.IsEndNode)
+            { 
+                checkingNodes.Add(item);
+            }
+        }
+
+
+        if(checkingNodes.Count == 2)
+        {
+            _highLight.SetActive(true);
+            _highLight.GetComponent<SpriteRenderer>().color = GamePlayManager.Instance.GetHighLightColor(colorId);
+        }
+        else
+        {
+            _highLight.SetActive(false);
+        }
     }
 }
