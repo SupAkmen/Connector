@@ -144,7 +144,7 @@ public class GamePlayManager : MonoBehaviour
     public Color GetHighLightColor(int colorId)
     {
         Color result = NodeColors[colorId];
-        result.a = 1;
+        result.a = 0.4f;
         return result;
     }
     #endregion

@@ -11,8 +11,11 @@ public class Node : MonoBehaviour
     [SerializeField] private GameObject _rightEdge;
     [SerializeField] private GameObject _highLight;
 
+    // Dung luu node hang nom -> Edge dung de noi toi node do ( A--B--C : B.ConnectedNodes { A -> leftEdge , C -> rightEdge} B co the noi voi A va C )
     private Dictionary<Node, GameObject> ConnectedEdges;
-    public List<Node> ConnectedNodes = new List<Node>();
+
+    // Dung de luu cac node duoc noi that su 
+    public List<Node> ConnectedNodes = new List<Node>();  
 
     [HideInInspector] public int colorId;
     public Vector2Int Pos2D { get; set; }
@@ -101,6 +104,59 @@ public class Node : MonoBehaviour
         {
             return;
         }
+        // Connected node already exist 
+        // Delete the edges and the parts
+        if(ConnectedNodes.Contains(connectedNode))
+        {
+            ConnectedNodes.Remove(connectedNode);
+            connectedNode.ConnectedNodes.Remove(this);
+            RemoveEdge(connectedNode);
+            DeleteNode();
+            connectedNode.DeleteNode();
+            return;
+        }
+      
+
+        //Start Node has 2 edges
+
+        if (ConnectedNodes.Count == 2)
+        {
+            Node tempNode = ConnectedNodes[0];
+
+            if (!tempNode.IsConnectedToEndNode())
+            {
+                ConnectedNodes.Remove(tempNode);
+                tempNode.ConnectedNodes.Remove(this);
+                RemoveEdge(tempNode);
+                tempNode.DeleteNode();
+            }
+            else
+            {
+                tempNode = ConnectedNodes[1];
+                ConnectedNodes.Remove(tempNode);
+                tempNode.ConnectedNodes.Remove(this);
+                RemoveEdge(tempNode);
+                tempNode.DeleteNode();
+            }
+        }
+
+        //EndNode has 2 edges
+        if(connectedNode.ConnectedNodes.Count == 2)
+        {
+            Node tempNode = connectedNode.ConnectedNodes[0];
+
+            connectedNode.ConnectedNodes.Remove(tempNode);
+            tempNode.ConnectedNodes.Remove(connectedNode);
+            connectedNode.RemoveEdge(tempNode);
+            tempNode.DeleteNode();
+
+            tempNode = connectedNode.ConnectedNodes[0];
+            connectedNode.ConnectedNodes.Remove(tempNode);
+            tempNode.ConnectedNodes.Remove(connectedNode);
+            connectedNode.RemoveEdge(tempNode);
+            tempNode.DeleteNode();
+
+        }
 
         AddEdge(connectedNode);
     }
@@ -113,5 +169,61 @@ public class Node : MonoBehaviour
         GameObject connectedEdge = ConnectedEdges[connectedNode];
         connectedEdge.SetActive(true);
         connectedEdge.GetComponent<SpriteRenderer>().color = GamePlayManager.Instance.NodeColors[colorId];
+    }
+
+    public void RemoveEdge(Node node)
+    {
+        GameObject edge = ConnectedEdges[node];
+        edge.SetActive(false);
+        edge = node.ConnectedEdges[this];
+        edge.SetActive(false);
+    }
+
+    private void DeleteNode()
+    {
+        Node startNode = this;
+
+        if(startNode .IsConnectedToEndNode())
+        {
+            return;
+        }
+
+        while(startNode != null)
+        {
+            Node tempNode = null;
+            if(startNode.ConnectedNodes.Count != 0)
+            {
+                tempNode = startNode.ConnectedNodes[0];
+                startNode.ConnectedNodes.Clear();
+                tempNode.ConnectedNodes.Remove(startNode);
+                startNode.RemoveEdge(tempNode);
+            }
+
+            startNode = tempNode;
+        }
+    }
+
+    public bool IsConnectedToEndNode(List<Node> checkNode = null)
+    {
+        if (checkNode == null)
+        {
+            checkNode = new List<Node>();
+        }
+
+        if(IsEndNode)
+        {
+            return true;
+        }
+
+        foreach(var item in ConnectedNodes)
+        {
+            if(!checkNode.Contains(item))
+            {
+                checkNode.Add(item);
+                return item.IsConnectedToEndNode(checkNode);
+            }
+        }
+
+        return false;
     }
 }
