@@ -104,6 +104,8 @@ public class GamePlayManager : MonoBehaviour
                 _nodeGrid.Add(new Vector2Int(i, j), spawnedNode);
 
                 spawnedNode.Pos2D = new Vector2Int(i, j);
+
+                spawnedNode.gameObject.name = i.ToString() + j.ToString();
             }
         }
 
