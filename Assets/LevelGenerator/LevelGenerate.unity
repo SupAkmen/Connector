@@ -658,7 +658,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1417773560}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1604400331}
+        m_TargetAssemblyTypeName: LevelGenerator, Connect.Generator
+        m_MethodName: CLickedSimulate
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1417773560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -843,6 +855,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1604400329}
+  - component: {fileID: 1604400331}
+  - component: {fileID: 1604400330}
   m_Layer: 0
   m_Name: LevelGenerator
   m_TagString: Untagged
@@ -865,6 +879,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1604400330
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604400328}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16b6c65eed119c74cbf2197f50bbd9fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1604400331
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604400328}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57f68be895a0a06459a6dd84739a79c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  canGeneratorOne: 1
+  stage: 0
+  _boardPrefab: {fileID: 4003334715252438236, guid: b0e6bce3633509f498aa75b4c1e7e718, type: 3}
+  _bgCellPrefab: {fileID: 8827412519248594239, guid: 7ce660a4ea20a504c96192d42558588c, type: 3}
+  _nodePrefab: {fileID: 8807720889861274638, guid: 9a132d388a163f54fa64367613eb6108, type: 3}
+  _simulateButton: {fileID: 1417773557}
+  _allLevelList: {fileID: 11400000, guid: e6631f860db7d7c4b872a131c56a7420, type: 2}
 --- !u!1 &1692458525
 GameObject:
   m_ObjectHideFlags: 0

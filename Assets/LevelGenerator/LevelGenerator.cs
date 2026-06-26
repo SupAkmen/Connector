@@ -13,7 +13,7 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField] private SpriteRenderer _boardPrefab, _bgCellPrefab;
     [SerializeField] private NodeRenderer _nodePrefab;
 
-    private int levelSize => stage + 4;
+    public int levelSize => stage + 4;
 
     private void Awake()
     {
@@ -51,7 +51,7 @@ public class LevelGenerator : MonoBehaviour
         {
             for (int j = 0; j < levelSize; j++)
             {
-                spawnPos = new Vector3(i + 0.5f, i + 0.5f, 0f);
+                spawnPos = new Vector3(i + 0.5f, j + 0.5f, 0f);
                 spawnNode = Instantiate(_nodePrefab, spawnPos, Quaternion.identity);
                 spawnNode.Init();
                 nodeGrid.Add(new Vector2Int(i, j), spawnNode);
@@ -80,7 +80,7 @@ public class LevelGenerator : MonoBehaviour
         }
         else
         {
-
+            //Debug.Log("click");
         }
 
         _simulateButton.SetActive(false);
@@ -95,26 +95,66 @@ public class LevelGenerator : MonoBehaviour
         GenerateLevelData();
     }
 
+    [SerializeField] private IGenerateMethod currentMethod;
     private void GenerateLevelData(int level = 0)
     {
         string currentLevelName = "Level" + stage.ToString() + level.ToString();
 
-        if(!Levels.ContainsKey(currentLevelName))
+        if (!Levels.ContainsKey(currentLevelName))
         {
 #if UNITY_EDITOR
             currentLevelData = ScriptableObject.CreateInstance<LevelData>();
-            AssetDatabase.CreateAsset(currentLevelData, "Assets/Common/Prefabs/Levels" + currentLevelName + ".asset");
+            AssetDatabase.CreateAsset(currentLevelData, "Assets/Common/Prefabs/Levels/" + currentLevelName + ".asset");
             AssetDatabase.SaveAssets();
 #endif      
             Levels[currentLevelName] = currentLevelData;
             _allLevelList.Levels.Add(currentLevelData);
-
+        }
+            currentLevelData = Levels[currentLevelName];
             currentLevelData.LevelName = currentLevelName;
             currentLevelData.Edges = new List<Edge>();
-        }
+
+        GetComponent<IGenerateMethod>().Generate();
     }
     #endregion
 
     #region NODE_RENDERING
+    List<Vector2Int> directions = new List<Vector2Int>() { Vector2Int.up, Vector2Int.down, Vector2Int.left,Vector2Int.right };
+
+    public void RenderGrid(Dictionary<Vector2Int,int> grid)
+    {
+        int numOfCorrectNodes;
+        int currentColor;
+
+        foreach(var item in nodeGrid)
+        {
+            item.Value.Init();
+            currentColor = grid[item.Key];
+            numOfCorrectNodes = 0;
+
+            if(currentColor != -1)
+            {
+                foreach(var direction in directions)
+                {
+                    if(grid.ContainsKey(item.Key + direction) && grid[item.Key + direction] == currentColor )
+                    {
+                        item.Value.SetEdge(currentColor, direction);
+                        numOfCorrectNodes++;
+                    }
+                }
+
+                if (currentColor <= 1)
+                {
+
+                    item.Value.SetEdge(currentColor, Vector2Int.zero);
+                }
+            }
+        }
+    }
     #endregion
+}
+
+public interface IGenerateMethod
+{
+    public void Generate();
 }
