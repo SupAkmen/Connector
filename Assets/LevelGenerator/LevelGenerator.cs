@@ -5,154 +5,161 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-public class LevelGenerator : MonoBehaviour
+namespace Connect.Generator
 {
-    #region START_METHOD
-    [SerializeField] bool canGeneratorOne;
-    [SerializeField] int stage;
-    [SerializeField] private SpriteRenderer _boardPrefab, _bgCellPrefab;
-    [SerializeField] private NodeRenderer _nodePrefab;
-
-    public int levelSize => stage + 4;
-
-    private void Awake()
+    public class LevelGenerator : MonoBehaviour
     {
-        SpawnBoard();
-        SpawnNodes();
-    }
+        #region START_METHOD
+        [SerializeField] bool canGeneratorOne;
+        [SerializeField] int stage;
+        [SerializeField] private SpriteRenderer _boardPrefab, _bgCellPrefab;
+        [SerializeField] private NodeRenderer _nodePrefab;
 
-    private void SpawnBoard()
-    {
-        var board = Instantiate(_boardPrefab, new Vector3(levelSize / 2f, levelSize / 2f, 0), Quaternion.identity);
+        public int levelSize => stage + 4;
 
-        board.size = new Vector2(levelSize + 0.08f, levelSize + 0.08f);
-
-        for (int i = 0; i < levelSize; i++)
+        private void Awake()
         {
-            for (int j = 0; j < levelSize; j++)
+            SpawnBoard();
+            SpawnNodes();
+        }
+
+        private void SpawnBoard()
+        {
+            var board = Instantiate(_boardPrefab, new Vector3(levelSize / 2f, levelSize / 2f, 0), Quaternion.identity);
+
+            board.size = new Vector2(levelSize + 0.08f, levelSize + 0.08f);
+
+            for (int i = 0; i < levelSize; i++)
             {
-                Instantiate(_bgCellPrefab, new Vector3(i + 0.5f, j + 0.5f, 0f), Quaternion.identity);
+                for (int j = 0; j < levelSize; j++)
+                {
+                    Instantiate(_bgCellPrefab, new Vector3(i + 0.5f, j + 0.5f, 0f), Quaternion.identity);
+                }
+            }
+
+            Camera.main.orthographicSize = levelSize / 1.6f + 1f;
+            Camera.main.transform.position = new Vector3(levelSize / 2f, levelSize / 2f, -10f);
+        }
+
+        public Dictionary<Vector2Int, NodeRenderer> nodeGrid;
+
+        private void SpawnNodes()
+        {
+            nodeGrid = new Dictionary<Vector2Int, NodeRenderer>();
+            Vector3 spawnPos;
+            NodeRenderer spawnNode;
+
+            for (int i = 0; i < levelSize; i++)
+            {
+                for (int j = 0; j < levelSize; j++)
+                {
+                    spawnPos = new Vector3(i + 0.5f, j + 0.5f, 0f);
+                    spawnNode = Instantiate(_nodePrefab, spawnPos, Quaternion.identity);
+                    spawnNode.Init();
+                    nodeGrid.Add(new Vector2Int(i, j), spawnNode);
+                    spawnNode.gameObject.name = i.ToString() + j.ToString(); ;
+                }
             }
         }
+        #endregion
 
-        Camera.main.orthographicSize = levelSize / 1.6f + 1f;
-        Camera.main.transform.position = new Vector3(levelSize / 2f, levelSize / 2f, -10f);
-    }
+        #region BUTTON_FUNCTION
+        [SerializeField] private GameObject _simulateButton;
 
-    public Dictionary<Vector2Int, NodeRenderer> nodeGrid;
-
-    private void SpawnNodes()
-    {
-        nodeGrid = new Dictionary<Vector2Int, NodeRenderer>();
-        Vector3 spawnPos;
-        NodeRenderer spawnNode;
-
-        for (int i = 0; i < levelSize; i++)
+        public void CLickedSimulate()
         {
-            for (int j = 0; j < levelSize; j++)
+            Levels = new Dictionary<string, LevelData>();
+
+            foreach (var item in _allLevelList.Levels)
             {
-                spawnPos = new Vector3(i + 0.5f, j + 0.5f, 0f);
-                spawnNode = Instantiate(_nodePrefab, spawnPos, Quaternion.identity);
-                spawnNode.Init();
-                nodeGrid.Add(new Vector2Int(i, j), spawnNode);
-                spawnNode.gameObject.name = i.ToString() + j.ToString(); ;
+                if (item == null || string.IsNullOrEmpty(item.LevelName))
+                {
+                    continue;
+                }
+                Levels[item.LevelName] = item;
             }
-        }
-    }
-    #endregion
 
-    #region BUTTON_FUNCTION
-    [SerializeField] private GameObject _simulateButton;
+            if (canGeneratorOne)
+            {
+                GenerateDefault();
+            }
+            else
+            {
+                //Debug.Log("click");
+            }
 
-    public void CLickedSimulate()
-    {
-        Levels = new Dictionary<string, LevelData>();
-
-        foreach (var item in _allLevelList.Levels)
-        {
-            Levels[item.LevelName] = item;
+            _simulateButton.SetActive(false);
         }
 
-        if (canGeneratorOne)
+        [SerializeField] private LevelList _allLevelList;
+        private Dictionary<string, LevelData> Levels;
+        private LevelData currentLevelData;
+
+        private void GenerateDefault()
         {
-            GenerateDefault();
+            GenerateLevelData();
         }
-        else
+
+        [SerializeField] private IGenerateMethod currentMethod;
+        private void GenerateLevelData(int level = 0)
         {
-            //Debug.Log("click");
-        }
+            string currentLevelName = "Level" + stage.ToString() + level.ToString();
 
-        _simulateButton.SetActive(false);
-    }
-
-    [SerializeField] private LevelList _allLevelList;
-    private Dictionary<string, LevelData> Levels;
-    private LevelData currentLevelData;
-
-    private void GenerateDefault()
-    {
-        GenerateLevelData();
-    }
-
-    [SerializeField] private IGenerateMethod currentMethod;
-    private void GenerateLevelData(int level = 0)
-    {
-        string currentLevelName = "Level" + stage.ToString() + level.ToString();
-
-        if (!Levels.ContainsKey(currentLevelName))
-        {
+            if (!Levels.ContainsKey(currentLevelName))
+            {
 #if UNITY_EDITOR
-            currentLevelData = ScriptableObject.CreateInstance<LevelData>();
-            AssetDatabase.CreateAsset(currentLevelData, "Assets/Common/Prefabs/Levels/" + currentLevelName + ".asset");
-            AssetDatabase.SaveAssets();
-#endif      
-            Levels[currentLevelName] = currentLevelData;
-            _allLevelList.Levels.Add(currentLevelData);
-        }
+                currentLevelData = ScriptableObject.CreateInstance<LevelData>();
+                AssetDatabase.CreateAsset(currentLevelData, "Assets/Common/Prefabs/Levels/" + currentLevelName + ".asset");
+                AssetDatabase.SaveAssets();
+#endif
+                Levels[currentLevelName] = currentLevelData;
+                _allLevelList.Levels.Add(currentLevelData);
+            }
             currentLevelData = Levels[currentLevelName];
             currentLevelData.LevelName = currentLevelName;
             currentLevelData.Edges = new List<Edge>();
 
-        GetComponent<IGenerateMethod>().Generate();
-    }
-    #endregion
+            GetComponent<IGenerateMethod>().Generate();
+        }
+        #endregion
 
-    #region NODE_RENDERING
-    List<Vector2Int> directions = new List<Vector2Int>() { Vector2Int.up, Vector2Int.down, Vector2Int.left,Vector2Int.right };
+        #region NODE_RENDERING
+        List<Vector2Int> directions = new List<Vector2Int>() { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
 
-    public void RenderGrid(Dictionary<Vector2Int,int> grid)
-    {
-        int numOfCorrectNodes;
-        int currentColor;
-
-        foreach(var item in nodeGrid)
+        public void RenderGrid(Dictionary<Vector2Int, int> grid)
         {
-            item.Value.Init();
-            currentColor = grid[item.Key];
-            numOfCorrectNodes = 0;
+            int numOfCorrectNodes;
+            int currentColor;
 
-            if(currentColor != -1)
+            foreach (var item in nodeGrid)
             {
-                foreach(var direction in directions)
+                item.Value.Init();
+                currentColor = grid[item.Key];
+                numOfCorrectNodes = 0;
+
+                if (currentColor != -1)
                 {
-                    if(grid.ContainsKey(item.Key + direction) && grid[item.Key + direction] == currentColor )
+                    foreach (var direction in directions)
                     {
-                        item.Value.SetEdge(currentColor, direction);
-                        numOfCorrectNodes++;
+                        if (grid.ContainsKey(item.Key + direction) && grid[item.Key + direction] == currentColor)
+                        {
+                            item.Value.SetEdge(currentColor, direction);
+                            numOfCorrectNodes++;
+                        }
                     }
-                }
 
-                if (currentColor <= 1)
-                {
-
-                    item.Value.SetEdge(currentColor, Vector2Int.zero);
+                    if (numOfCorrectNodes <= 1)
+                    {
+                        item.Value.SetEdge(currentColor, Vector2Int.zero);
+                    }
                 }
             }
         }
+        #endregion
     }
-    #endregion
-}
-public interface IGenerateMethod
-{
-    public void Generate();
+    public interface IGenerateMethod
+    {
+        public void Generate();
+    }
+
 }

@@ -8,6 +8,4 @@ namespace Connect.common
     {
         public List<LevelData> Levels;
     }
-
-
 }

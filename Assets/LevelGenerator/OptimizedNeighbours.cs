@@ -1,12 +1,11 @@
-using NUnit.Framework.Interfaces;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-namespace Connect.Generator
+namespace Connect.Generator.OptimizedNeighbour
 {
-    public class AllNeighbours : MonoBehaviour, IGenerateMethod
+    public class OptimizedNeighbours : MonoBehaviour,IGenerateMethod
     {
         [SerializeField] private TextMeshProUGUI _timeText, _gridCountText;
         [SerializeField] private bool _showOnlyResult;
@@ -145,7 +144,7 @@ namespace Connect.Generator
     public class GridData
     {
         private static List<Vector2Int> directionChecks = new List<Vector2Int>()
-        { Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right};
+    { Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right};
 
         public Dictionary<Vector2Int, int> _grid;
         public bool IsSolved;

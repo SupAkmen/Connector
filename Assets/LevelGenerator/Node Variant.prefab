@@ -129,5 +129,5 @@ MonoBehaviour:
   _point: {fileID: 7772532720219415184}
   _topEdge: {fileID: 8830957227683274758}
   _botEdge: {fileID: 4186072048571435736}
-  _rightEge: {fileID: 732396099931141498}
-  _leftEdge: {fileID: 4937342434221676003}
+  _rightEge: {fileID: 4937342434221676003}
+  _leftEdge: {fileID: 732396099931141498}
