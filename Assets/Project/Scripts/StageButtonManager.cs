@@ -16,7 +16,6 @@ public class StageButtonManager : MonoBehaviour
 
     void ClickedButton()
     {
-       
        GameManager.Instance.CurrentStage = _stageNumber;
        GameManager.Instance.StageName = _stageName;
        MainMenuManager.instance.ClickedStage(_stageName,_stageColor);

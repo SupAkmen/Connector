@@ -59,7 +59,6 @@ public class LevelGenerator : MonoBehaviour
             }
         }
     }
-
     #endregion
 
     #region BUTTON_FUNCTION
@@ -153,7 +152,6 @@ public class LevelGenerator : MonoBehaviour
     }
     #endregion
 }
-
 public interface IGenerateMethod
 {
     public void Generate();

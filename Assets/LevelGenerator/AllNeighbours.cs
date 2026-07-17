@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -17,6 +16,7 @@ public class AllNeighbours : MonoBehaviour,IGenerateMethod
     {
         _checkingGrid = new List<GridData>();
         Instance = GetComponent<LevelGenerator>();
+        isCreating = true;
     }
 
     public void Generate()

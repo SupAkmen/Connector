@@ -904,7 +904,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canGeneratorOne: 1
-  stage: 14
+  stage: 4
   _boardPrefab: {fileID: 4003334715252438236, guid: b0e6bce3633509f498aa75b4c1e7e718, type: 3}
   _bgCellPrefab: {fileID: 8827412519248594239, guid: 7ce660a4ea20a504c96192d42558588c, type: 3}
   _nodePrefab: {fileID: 8807720889861274638, guid: 9a132d388a163f54fa64367613eb6108, type: 3}

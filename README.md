@@ -1,8 +1,8 @@
 # Connector
 
-Game puzzle nối điểm (connect-the-dots / flow) làm bằng **Unity** với **URP 2D**.
+Game puzzle nối điểm (connect-the-dots / flow) làm bằng **Unity 6** (6000.0.70f1) với **URP 2D**, target **Android**.
 
-Người chơi vẽ các đường nối (Edge) giữa các điểm trên lưới để hoàn thành từng level. Game chia theo **Stage** (chủ đề/màu) và mỗi stage có **50 Level**, mở khóa tuần tự.
+Người chơi kéo chuột nối các điểm cùng màu trên lưới thành đường, phủ kín bàn để thắng. Game chia theo **Stage** (chủ đề/màu) và mỗi stage có **50 Level**, mở khóa tuần tự.
 
 ---
 
@@ -14,7 +14,8 @@ Người chơi vẽ các đường nối (Edge) giữa các điểm trên lướ
 | Lưu tiến độ (PlayerPrefs) | ✅ Đã code |
 | Dữ liệu level (ScriptableObject) | ✅ Đã code |
 | Quản lý âm thanh | ✅ Đã code |
-| **Gameplay (vẽ đường, kiểm tra thắng)** | ⚠️ **Chưa code** — `GameplayManager.cs` và `Node.cs` còn rỗng |
+| **Gameplay (dựng lưới, vẽ đường, kiểm tra thắng)** | ✅ Đã code — `GamePlayManager.cs` + `Node.cs` |
+| Công cụ tạo level (`LevelGenerator/`) | 🛠️ Có sẵn, chạy trong Editor |
 
 ---
 
@@ -24,24 +25,24 @@ Người chơi vẽ các đường nối (Edge) giữa các điểm trên lướ
 Assets/
 ├── Common/                  # Tài nguyên dùng chung
 │   ├── Prefabs/
-│   │   ├── Levels/Levels.asset      # LevelList: danh sách tất cả level
+│   │   ├── Levels/                  # Các LevelData.asset (Level130, Level140, …)
 │   │   └── DefaultLevel.asset       # Level mặc định (fallback)
 │   └── Scripts/
-│       ├── LevelData.cs             # SO: 1 level = danh sách Edge
-│       └── LevelList.cs             # SO: tập hợp tất cả LevelData
+│       ├── LevelData.cs             # SO: 1 level = danh sách Edge   (namespace Connect.common)
+│       └── LevelList.cs             # SO: List<LevelData> Levels     (namespace Connect.common)
 ├── Project/
 │   ├── Scenes/
 │   │   ├── MainMenu.unity           # Menu + chọn stage/level
 │   │   └── GamePlay.unity           # Màn chơi
-│   ├── Prefabs/                     # Level.prefab, Stage.prefab (UI button)
+│   ├── Prefabs/                     # Level.prefab, Stage.prefab (UI button), Node, Board…
 │   └── Scripts/
 │       ├── GameManager.cs           # Singleton: tiến độ, load level, đổi scene
 │       ├── MainMenuManager.cs       # Điều khiển panel menu
 │       ├── StageButtonManager.cs    # Nút chọn stage
 │       ├── LevelButton.cs           # Nút chọn level (khóa/mở)
 │       ├── SoundManager.cs          # Singleton: phát SFX
-│       ├── GameplayManager.cs       # ⚠️ rỗng — logic chơi
-│       └── Node.cs                  # ⚠️ rỗng — điểm trên lưới
+│       ├── GamePlayManager.cs       # Dựng board + node, xử lý input, kiểm tra thắng
+│       └── Node.cs                  # 1 điểm/ô lưới: màu, cạnh nối, logic nối/gỡ đường
 ├── Settings/                # Cấu hình URP 2D
 └── Resources/, Editor/, ExternalAsset/, LevelGenerator/, TextMesh Pro/
 ```
@@ -54,14 +55,16 @@ Assets/
 
 - **`GameManager`** (`Connect.Core`) — `DontDestroyOnLoad`, tồn tại xuyên scene.
   - Giữ `CurrentStage`, `CurrentLevel`, `StageName`.
-  - `Init()` nạp tất cả level từ `LevelList` vào `Dictionary<string, LevelData>` theo `LevelName`.
-- **`SoundManager`** — phát hiệu ứng âm thanh qua `PlaySound(AudioClip)`.
+  - `Init()` nạp tất cả level từ `LevelList.Levels` vào `Dictionary<string, LevelData>` theo `LevelName`.
+- **`SoundManager`** — `DontDestroyOnLoad`, phát SFX qua `PlaySound(AudioClip)`.
+- **`MainMenuManager`** (`instance`) — sống trong scene MainMenu, điều khiển panel.
+- **`GamePlayManager`** (`Instance`) — sống trong scene GamePlay, dựng màn chơi.
 
 ### Dữ liệu level (ScriptableObject)
 
 - **`LevelData`** = `LevelName` + `List<Edge>`.
-- **`Edge`** = `List<Vector2Int> Points`; có `StartPoint` (điểm đầu) và `EndPoint` (điểm cuối).
-- **`LevelList`** = `List<LevelData>` — toàn bộ level của game.
+- **`Edge`** = `List<Vector2Int> Points`; `StartPoint` = Points[0], `EndPoint` = Points cuối.
+- **`LevelList`** = `List<LevelData> Levels` — toàn bộ level của game.
 
 ### Quy ước đặt tên level
 
@@ -93,16 +96,49 @@ TitlePanel ──ClickedPlay──▶ StagePanel ──ClickedStage──▶ Lev
 
 ---
 
-## Hằng số / quy ước
+## Gameplay (scene GamePlay)
 
-- 50 level mỗi stage; tối đa 7 stage (stage 8 → reset về menu).
-- Tên GameObject của `LevelButton` phải kết thúc bằng `_<số level>` (vd `Level_5`).
-- Scene: `"MainMenu"`, `"Gameplay"` — phải khớp Build Settings.
+### Dựng màn — `GamePlayManager.Awake`
+
+Kích cỡ lưới = **`CurrentStage + 4`** (stage 1 → 5×5, stage 3 → 7×7…).
+
+1. **`SpawnBoard()`** — tạo board nền + các ô `_bgCellPrefab`, chỉnh `Camera.orthographicSize` và vị trí cho khớp cỡ lưới.
+2. **`SpawnNodes()`** — instantiate 1 `Node` mỗi ô:
+   - `GetColorID(i,j)` dò `CurrentLevelData.Edges`; nếu ô là `StartPoint`/`EndPoint` của edge thứ `colorId` → node đó là **điểm màu** (bật `_point`, tô `NodeColors[colorId]`); không thì node trống.
+   - Nối cạnh: mỗi node biết 4 hàng xóm (up/down/left/right) qua `SetEdge`.
+
+> ⚠️ **Board và Node phải cùng công thức `CurrentStage + 4`.** Nếu lệch (vd Node dùng `CurrentLevel`) → lưới node nhỏ hơn board, điểm màu bị cắt/thiếu.
+
+### Input — `GamePlayManager.Update`
+
+- Chuột trái xuống trên 1 node `IsClickable` → chọn `startNode`, bật `_clickHighlight`.
+- Rê chuột sang node kề khác màu-cuối hợp lệ → `startNode.UpdateInput(tempNode)` nối đường, rồi `CheckWin()`.
+
+### Logic nối đường — `Node`
+
+- **`ConnectedEdges`** (Node→GameObject cạnh): các node có thể nối tới + sprite cạnh tương ứng.
+- **`ConnectedNodes`**: các node đang thực sự nối.
+- `UpdateInput` xử lý: nối mới, gỡ khi nối lại, cắt bớt khi node đã đủ 2 cạnh, chặn tạo ô vuông (box) / bậc 3 (`IsDegreeThree`), lan màu theo đường (`AddEdge` gán `colorId`).
+- **`IsWin`**: điểm cuối (`_point` bật) cần đúng 1 cạnh; ô thường cần đúng 2 cạnh.
+- **`SolveHighLight`**: đường đã nối 2 đầu cùng màu → bật `_highLight`.
+
+### Thắng — `CheckWin`
+
+Gọi `SolveHighLight` mọi node; nếu **tất cả** node `IsWin` → `GameManager.UnlockLevel()`, hiện `_winText`, khóa input.
 
 ---
 
-## Cần làm tiếp
+## Hằng số / quy ước
 
-1. **`Node.cs`** — biểu diễn 1 điểm/ô trên lưới (vị trí `Vector2Int`, màu, trạng thái nối).
-2. **`GameplayManager.cs`** — dựng lưới từ `GameManager.Instance.GetLevel()`, xử lý kéo/vẽ đường theo `Edge`, kiểm tra thắng, gọi `UnlockLevel()` + `SoundManager.PlaySound`.
-3. Kết nối thư mục **`LevelGenerator/`** (công cụ tạo level) với `LevelList`.
+- Cỡ lưới = `CurrentStage + 4`. 50 level mỗi stage; tối đa 7 stage (stage 8 → reset về menu).
+- Tên GameObject của `LevelButton` phải kết thúc bằng `_<số level>` (vd `Level_5`).
+- Scene: `"MainMenu"`, `"GamePlay"` — phải khớp tên file & Build Settings (chú ý chữ **P** hoa trong `GamePlay`).
+- `NodeColors` (list trong `GamePlayManager` Inspector) phải để **alpha = 255**, không thì điểm màu tàng hình.
+- Level panel trong scene MainMenu nên để **inactive** khi lưu, tránh `LevelButton.OnEnable` chạy trước `MainMenuManager.Awake` (null ref).
+
+---
+
+## Ghi chú kỹ thuật
+
+- Namespace hiện tại: `Connect.Core` (script logic), `Connect.common` (LevelData/LevelList — chữ thường). Bản tham chiếu gốc dùng `Connect.Common` (chữ hoa) — cần đồng bộ nếu tích hợp thêm `LevelGenerator`.
+- `MainMenuManager` dùng singleton tên `instance` (thường); các manager khác dùng `Instance` (hoa).

@@ -17,7 +17,6 @@ public class RandomSpawning : MonoBehaviour, IGenerateMethod
     {
         StartCoroutine(SpawnRandom());
     }
-
     IEnumerator SpawnRandom()
     {
         bool isSpawning = true;
