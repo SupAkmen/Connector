@@ -64,7 +64,7 @@ public class Node : MonoBehaviour
     {
         colorId = colorIdForSpawnNode;
         _point.SetActive(true);
-        _point.GetComponent<SpriteRenderer>().color = GamePlayManager.Instance.NodeColors[colorId];
+        _point.GetComponent<SpriteRenderer>().color = GamePlayManager.Instance.GetNodeColor(colorId);
     }
 
     public void SetEdge(Vector2Int offset, Node node)
@@ -233,7 +233,7 @@ public class Node : MonoBehaviour
         ConnectedNodes.Add(connectedNode);
         GameObject connectedEdge = ConnectedEdges[connectedNode];
         connectedEdge.SetActive(true);
-        connectedEdge.GetComponent<SpriteRenderer>().color = GamePlayManager.Instance.NodeColors[colorId];
+        connectedEdge.GetComponent<SpriteRenderer>().color = GamePlayManager.Instance.GetNodeColor(colorId);
     }
 
     public void RemoveEdge(Node node)
@@ -381,6 +381,25 @@ public class Node : MonoBehaviour
             _highLight.GetComponent<SpriteRenderer>().color = GamePlayManager.Instance.GetHighLightColor(colorId);
         }
         else
+        {
+            _highLight.SetActive(false);
+        }
+    }
+
+    // ---- GOI Y (HINT) ----
+    // Bat highlight mo tam thoi de goi y duong di (khong tinh vao trang thai noi).
+    public void ShowHintHighlight(int hintColorId)
+    {
+        _highLight.SetActive(true);
+        Color c = GamePlayManager.Instance.GetNodeColor(hintColorId);
+        c.a = 0.35f;
+        _highLight.GetComponent<SpriteRenderer>().color = c;
+    }
+
+    public void HideHintHighlight()
+    {
+        // Chi tat khi node nay chua duoc noi that su (tranh xoa highlight loi giai that).
+        if (ConnectedNodes.Count == 0)
         {
             _highLight.SetActive(false);
         }

@@ -1,6 +1,7 @@
 using Connect.common;
 using Connect.Core;
 using NUnit.Framework;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -18,6 +19,12 @@ public class GamePlayManager : MonoBehaviour
     [SerializeField] GameObject _winText;
     [SerializeField] SpriteRenderer _clickHighlight;
 
+    [Header("Hint (goi y)")]
+    [SerializeField] private int _maxHints = 3;          // so lan goi y moi man (cau hinh)
+    [SerializeField] private float _hintDuration = 2f;   // thoi gian hien duong mo (giay)
+    [SerializeField] private TextMeshProUGUI _hintCountText; // (tuy chon) hien so hint con lai
+    private int _hintsLeft;
+
     private void Awake()
     {
         Instance = this;
@@ -28,9 +35,13 @@ public class GamePlayManager : MonoBehaviour
 
         CurrentLevelData = GameManager.Instance.GetLevel();
 
+        BuildShuffledColors();
+
         SpawnBoard();
         SpawnNodes();
 
+        _hintsLeft = _maxHints;
+        UpdateHintUI();
     }
     #endregion
 
@@ -127,6 +138,31 @@ public class GamePlayManager : MonoBehaviour
     }
 
     public List<Color> NodeColors;
+
+    // Bang mau da xao - dung de moi lan choi mau khac nhau.
+    private List<Color> _shuffledColors;
+
+    // Xao bang mau bang Random that (theo thoi gian) -> moi lan vao level mau khac.
+    private void BuildShuffledColors()
+    {
+        _shuffledColors = new List<Color>(NodeColors);
+        for (int i = _shuffledColors.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (_shuffledColors[i], _shuffledColors[j]) = (_shuffledColors[j], _shuffledColors[i]);
+        }
+    }
+
+    // Moi cho lay mau deu di qua ham nay (khong doc thang NodeColors nua).
+    public Color GetNodeColor(int colorId)
+    {
+        if (_shuffledColors == null)
+        {
+            BuildShuffledColors();
+        }
+        return _shuffledColors[colorId % _shuffledColors.Count];
+    }
+
     public int GetColorID(int i,int j)
     {
         List<Edge> edges  = CurrentLevelData.Edges;
@@ -145,7 +181,7 @@ public class GamePlayManager : MonoBehaviour
 
     public Color GetHighLightColor(int colorId)
     {
-        Color result = NodeColors[colorId];
+        Color result = GetNodeColor(colorId);
         result.a = 0.4f;
         return result;
     }
@@ -170,7 +206,6 @@ public class GamePlayManager : MonoBehaviour
 
         if(Input.GetMouseButton(0))
         {
-
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 mousePos2D = new Vector2(mousePos.x,mousePos.y);
             RaycastHit2D hit = Physics2D.Raycast(mousePos,Vector2.zero);
@@ -211,9 +246,6 @@ public class GamePlayManager : MonoBehaviour
             _clickHighlight.gameObject.SetActive(false);
         }
     }
-
-
-
     #endregion
 
     #region WIN_CODITIONS
@@ -244,6 +276,74 @@ public class GamePlayManager : MonoBehaviour
         hasGameFinished = true;
     }
 
+    #endregion
+
+    #region HINT
+    private bool _isHintShowing;
+    public void ClickedHint()
+    {
+        if (hasGameFinished) return;
+        if (_isHintShowing) return;
+        if (_hintsLeft <= 0) return;
+
+        int colorId = FindUnsolvedColor();
+        if (colorId == -1) return; 
+
+        _hintsLeft--;
+        UpdateHintUI();
+        StartCoroutine(ShowHintRoutine(colorId));
+    }
+
+    private int FindUnsolvedColor()
+    {
+        List<Edge> edges = CurrentLevelData.Edges;
+        for (int colorId = 0; colorId < edges.Count; colorId++)
+        {
+            Vector2Int start = edges[colorId].StartPoint;
+            if (_nodeGrid.TryGetValue(start, out Node startNode))
+            {
+                if (startNode.ConnectedNodes.Count == 0)
+                {
+                    return colorId;
+                }
+            }
+        }
+        return -1;
+    }
+
+    IEnumerator ShowHintRoutine(int colorId)
+    {
+        _isHintShowing = true;
+
+        List<Vector2Int> path = CurrentLevelData.Edges[colorId].Points;
+        List<Node> hinted = new List<Node>();
+
+        foreach (var pos in path)
+        {
+            if (_nodeGrid.TryGetValue(pos, out Node node))
+            {
+                node.ShowHintHighlight(colorId);
+                hinted.Add(node);
+            }
+        }
+
+        yield return new WaitForSeconds(_hintDuration);
+
+        foreach (var node in hinted)
+        {
+            node.HideHintHighlight();
+        }
+
+        _isHintShowing = false;
+    }
+
+    private void UpdateHintUI()
+    {
+        if (_hintCountText != null)
+        {
+            _hintCountText.text = _hintsLeft.ToString();
+        }
+    }
     #endregion
 
     #region BUTTON_FUNCTIONS

@@ -907,13 +907,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1604400328}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56c218d88e1cc324dae46c78617fe229, type: 3}
+  m_Script: {fileID: 11500000, guid: 0c7697ad709692842a23e4594ef36d64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _timeText: {fileID: 1513329615}
   _gridCountText: {fileID: 207806975}
   _showOnlyResult: 0
-  speedMultipler: 10000
+  speedMultipler: 1000
   speed: 0.01
 --- !u!1 &1692458525
 GameObject:

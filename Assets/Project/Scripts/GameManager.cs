@@ -39,8 +39,6 @@ namespace Connect.Core
         }
         #endregion
 
-
-
         #region GAME_VARIABLES
         [HideInInspector] public int CurrentStage;
         [HideInInspector] public int CurrentLevel;

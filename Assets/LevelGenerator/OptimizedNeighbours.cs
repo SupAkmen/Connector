@@ -34,6 +34,7 @@ namespace Connect.Generator.OptimizedNeighbour
             {
                 for (int j = 0; j < Instance.levelSize; j++)
                 {
+
                     GridData tempGrid = new GridData(i, j, Instance.levelSize);
                     _checkingGrid.Add(tempGrid);
                 }
@@ -144,7 +145,7 @@ namespace Connect.Generator.OptimizedNeighbour
     public class GridData
     {
         private static List<Vector2Int> directionChecks = new List<Vector2Int>()
-    { Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right};
+        { Vector2Int.up,Vector2Int.down,Vector2Int.left,Vector2Int.right};
 
         public Dictionary<Vector2Int, int> _grid;
         public bool IsSolved;
